@@ -164,9 +164,18 @@ class BookRepositoryIT extends AbstractIntegrationTest {
         @Test
         @DisplayName("should search by author name using searchBooks()")
         void shouldSearchByAuthorKeyword() {
-            // TODO: Use searchBooks() with an author name as keyword
-            //       Verify it finds books by that author
-            fail("Not implemented yet");
+            // Arrange — keyword "george" must match in the author OR the title field
+            createBook("978-K1", "1984", "George Orwell", 1, Genre.FICTION);
+            createBook("978-K2", "Curious George", "H. A. Rey", 1, Genre.CHILDREN);
+            createBook("978-K3", "Pride and Prejudice", "Jane Austen", 1, Genre.FICTION);
+
+            // Act
+            List<Book> results = bookRepository.searchBooks("george");
+
+            // Assert
+            assertThat(results).hasSize(2);
+            assertThat(results).extracting(Book::getTitle)
+                    .containsExactlyInAnyOrder("1984", "Curious George");
         }
 
         @Test
