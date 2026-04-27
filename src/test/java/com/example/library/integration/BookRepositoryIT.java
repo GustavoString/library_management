@@ -145,9 +145,20 @@ class BookRepositoryIT extends AbstractIntegrationTest {
         @Test
         @DisplayName("should find books by author (case insensitive, partial match)")
         void shouldFindByAuthor() {
-            // TODO: Save books by different authors
-            //       Search by partial author name and verify results
-            fail("Not implemented yet");
+            // Arrange
+            createBook("978-A1", "1984", "George Orwell", 1, Genre.FICTION);
+            createBook("978-A2", "A Game of Thrones", "GEORGE R. R. MARTIN", 2, Genre.FICTION);
+            createBook("978-A3", "Pride and Prejudice", "Jane Austen", 1, Genre.FICTION);
+
+            // Act
+            List<Book> results = bookRepository.findByAuthorContainingIgnoreCase("george");
+
+            // Assert
+            assertThat(results).hasSize(2);
+            assertThat(results).extracting(Book::getAuthor)
+                    .containsExactlyInAnyOrder("George Orwell", "GEORGE R. R. MARTIN");
+            assertThat(results).extracting(Book::getAuthor)
+                    .doesNotContain("Jane Austen");
         }
 
         @Test
