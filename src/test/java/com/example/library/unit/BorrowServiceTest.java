@@ -12,10 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -163,29 +165,68 @@ class BorrowServiceTest {
         @Test
         @DisplayName("should successfully return a borrowed book")
         void shouldReturnBook_WhenBorrowed() {
-            // TODO: Create a BorrowRecord with BORROWED status
-            //       Mock the repository to return it
-            //       Call returnBook() and verify:
-            //       - status changed to RETURNED
-            //       - returnDate is set
-            //       - available copies increased
-            fail("Not implemented yet");
+            // Arrange
+            sampleBook.setAvailableCopies(2);
+            BorrowRecord record = new BorrowRecord(sampleBook, sampleMember);
+            record.setId(10L);
+
+            when(borrowRecordRepository.findById(10L)).thenReturn(Optional.of(record));
+            when(borrowRecordRepository.save(any(BorrowRecord.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+            when(bookRepository.save(any(Book.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            // Act
+            BorrowResponse response = borrowService.returnBook(10L);
+
+            // Assert
+            assertNotNull(response);
+            assertEquals(BorrowStatus.RETURNED, record.getStatus());
+            assertEquals(LocalDate.now(), record.getReturnDate());
+            assertEquals(BorrowStatus.RETURNED, response.getStatus());
+
+            ArgumentCaptor<Book> bookCaptor = ArgumentCaptor.forClass(Book.class);
+            verify(bookRepository).save(bookCaptor.capture());
+            assertEquals(3, bookCaptor.getValue().getAvailableCopies());
+
+            verify(borrowRecordRepository).save(record);
         }
 
         @Test
         @DisplayName("should throw when trying to return an already returned book")
         void shouldThrow_WhenAlreadyReturned() {
-            // TODO: Create a BorrowRecord with RETURNED status
-            //       Verify IllegalStateException is thrown
-            fail("Not implemented yet");
+            // Arrange
+            BorrowRecord record = new BorrowRecord(sampleBook, sampleMember);
+            record.setId(10L);
+            record.setStatus(BorrowStatus.RETURNED);
+            record.setReturnDate(LocalDate.now().minusDays(1));
+
+            when(borrowRecordRepository.findById(10L)).thenReturn(Optional.of(record));
+
+            // Act + Assert
+            IllegalStateException ex = assertThrows(IllegalStateException.class,
+                    () -> borrowService.returnBook(10L));
+            assertTrue(ex.getMessage().contains("already been returned"),
+                    "Expected message about already returned, got: " + ex.getMessage());
+
+            verify(borrowRecordRepository, never()).save(any());
+            verify(bookRepository, never()).save(any());
         }
 
         @Test
         @DisplayName("should throw when borrow record not found")
         void shouldThrow_WhenRecordNotFound() {
-            // TODO: Mock repository to return empty Optional
-            //       Verify IllegalStateException is thrown
-            fail("Not implemented yet");
+            // Arrange
+            when(borrowRecordRepository.findById(99L)).thenReturn(Optional.empty());
+
+            // Act + Assert
+            IllegalStateException ex = assertThrows(IllegalStateException.class,
+                    () -> borrowService.returnBook(99L));
+            assertTrue(ex.getMessage().contains("not found"),
+                    "Expected not-found message, got: " + ex.getMessage());
+
+            verify(borrowRecordRepository, never()).save(any());
+            verify(bookRepository, never()).save(any());
         }
     }
 }
