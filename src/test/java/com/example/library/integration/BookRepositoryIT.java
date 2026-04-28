@@ -18,7 +18,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * INTEGRATION TEST - Repository Layer
@@ -215,8 +214,15 @@ class BookRepositoryIT extends AbstractIntegrationTest {
         @Test
         @DisplayName("should handle deleting a book")
         void shouldDeleteBook() {
-            // TODO: Save a book, delete it, verify it's gone
-            fail("Not implemented yet");
+            // Arrange
+            Book savedBook = createBook("978-1", "Fahrenheit 451", "Frank Herbert", 1, Genre.FICTION);
+            Long bookId = savedBook.getId();
+
+            // Act
+            bookRepository.deleteById(bookId);
+
+            // Assert
+            assertThat(bookRepository.findById(bookId)).isEmpty();
         }
     }
 }
