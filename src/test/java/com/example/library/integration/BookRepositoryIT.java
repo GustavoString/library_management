@@ -10,12 +10,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -199,10 +201,15 @@ class BookRepositoryIT extends AbstractIntegrationTest {
         @Test
         @DisplayName("should enforce unique ISBN constraint")
         void shouldEnforceUniqueIsbn() {
-            // TODO: Try to save two books with the same ISBN
-            //       Verify a DataIntegrityViolationException is thrown
-            //       Hint: Use assertThrows() and flush the persistence context
-            fail("Not implemented yet");
+            // Arrange
+            String commonIsbn = "978-1";
+            createBook(commonIsbn, "A Game of Thrones", "George R. R. Martin", 1, Genre.FICTION);
+            
+            Book duplicateBook = new Book(commonIsbn, "The Hobbit", "J.R.R. Tolkien", 1, Genre.FICTION);
+            duplicateBook.setPublishedDate(LocalDate.of(2021, 1, 1));
+
+            // Act & Assert
+            assertThrows(DataIntegrityViolationException.class, () -> bookRepository.saveAndFlush(duplicateBook));
         }
 
         @Test
