@@ -250,11 +250,15 @@ class LibraryApiIT extends AbstractIntegrationTest {
         @Test
         @DisplayName("should deactivate a member via DELETE")
         void shouldDeactivateMember() {
-            // TODO:
-            // 1. Create a member
-            // 2. DELETE /api/members/{id}
-            // 3. GET /api/members/{id} and verify active = false
-            fail("Not implemented yet");
+            Member member = createTestMember("Mehmet Kaya", "mehmet@test.com", MembershipType.STANDARD);
+
+            restTemplate.delete(baseUrl + "/members/" + member.getId());
+
+            ResponseEntity<Member> response = restTemplate.getForEntity(
+                    baseUrl + "/members/" + member.getId(), Member.class);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody().isActive()).isFalse();
         }
 
         @Test
