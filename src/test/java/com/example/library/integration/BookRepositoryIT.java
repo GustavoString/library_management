@@ -181,8 +181,14 @@ class BookRepositoryIT extends AbstractIntegrationTest {
         @Test
         @DisplayName("should return empty list when no books match search")
         void shouldReturnEmpty_WhenNoMatch() {
-            // TODO: Search for a keyword that matches nothing
-            fail("Not implemented yet");
+            // Arrange
+            createBook("978-1", "The Lord of the Rings", "J. R. R. Tolkien", 1, Genre.FICTION);
+
+            // Act
+            List<Book> results = bookRepository.searchBooks("nonexistent");
+
+            // Assert
+            assertThat(results).isEmpty();
         }
     }
 
