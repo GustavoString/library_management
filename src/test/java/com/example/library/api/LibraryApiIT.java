@@ -295,12 +295,27 @@ class LibraryApiIT extends AbstractIntegrationTest {
         @Test
         @DisplayName("should get active borrows for a member")
         void shouldGetActiveBorrows() {
-            // TODO:
-            // 1. Create a member and 2 books
-            // 2. Borrow both books
-            // 3. Return one of them
-            // 4. GET /api/borrows/member/{id}/active — should return only 1
-            fail("Not implemented yet");
+            Member member = createTestMember("Ali Veli", "ali@test.com", MembershipType.STANDARD);
+            Book book1 = createTestBook("978-1", "Book One", "Author A");
+            Book book2 = createTestBook("978-2", "Book Two", "Author B");
+
+            // İki kitabı ödünç al
+            BorrowRequest request1 = new BorrowRequest(book1.getId(), member.getId());
+            BorrowRequest request2 = new BorrowRequest(book2.getId(), member.getId());
+
+            restTemplate.postForEntity(baseUrl + "/borrows", request1, Map.class);
+            ResponseEntity<Map> borrow2 = restTemplate.postForEntity(baseUrl + "/borrows", request2, Map.class);
+
+            // İkinci kitabı iade et
+            Number borrowId = (Number) borrow2.getBody().get("id");
+            restTemplate.postForEntity(baseUrl + "/borrows/" + borrowId.longValue() + "/return", null, Map.class);
+
+            // Aktif ödünçleri getir — sadece 1 tane olmalı
+            ResponseEntity<Map[]> response = restTemplate.getForEntity(
+                    baseUrl + "/borrows/member/" + member.getId() + "/active", Map[].class);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).hasSize(1);
         }
     }
 }
