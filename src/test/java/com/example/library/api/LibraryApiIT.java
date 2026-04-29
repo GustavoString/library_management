@@ -280,8 +280,16 @@ class LibraryApiIT extends AbstractIntegrationTest {
         @Test
         @DisplayName("should search books by keyword via GET /api/books/search?keyword=...")
         void shouldSearchBooks() {
-            // TODO: Create several books, search by keyword, verify results
-            fail("Not implemented yet");
+            createTestBook("978-1", "Clean Code", "Robert Martin");
+            createTestBook("978-2", "The Pragmatic Programmer", "Dave Thomas");
+            createTestBook("978-3", "Design Patterns", "Gang of Four");
+
+            ResponseEntity<Book[]> response = restTemplate.getForEntity(
+                    baseUrl + "/books/search?keyword=clean", Book[].class);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).hasSize(1);
+            assertThat(response.getBody()[0].getTitle()).isEqualTo("Clean Code");
         }
 
         @Test
