@@ -195,37 +195,81 @@ class LibraryApiIT extends AbstractIntegrationTest {
         @Test
         @DisplayName("should return 409 when borrowing limit exceeded")
         void shouldReturn409_WhenBorrowLimitExceeded() {
-            // TODO:
+            // Arrange
             // 1. Create a STUDENT member (limit = 2 books)
+            Member student = createTestMember("Student User", "student@test.com", MembershipType.STUDENT);
+
             // 2. Create 3 different books
+            Book book1 = createTestBook("978-101", "Book 1", "Author 1");
+            Book book2 = createTestBook("978-102", "Book 2", "Author 2");
+            Book book3 = createTestBook("978-103", "Book 3", "Author 3");
+
             // 3. Borrow 2 books successfully
+            restTemplate.postForEntity(baseUrl + "/borrows", new BorrowRequest(book1.getId(), student.getId()), Map.class);
+            restTemplate.postForEntity(baseUrl + "/borrows", new BorrowRequest(book2.getId(), student.getId()), Map.class);
+
+            // Act
             // 4. Try to borrow a 3rd book — should return 409 CONFLICT
-            fail("Not implemented yet");
+            BorrowRequest thirdBorrow = new BorrowRequest(book3.getId(), student.getId());
+            ResponseEntity<Map> response = restTemplate.postForEntity(baseUrl + "/borrows", thirdBorrow, Map.class);
+
+            // Assert
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+            assertThat(response.getBody().get("message").toString())
+                    .contains("Student User has reached the borrowing limit of 2 books");
         }
 
         @Test
         @DisplayName("should return 409 when no copies available")
         void shouldReturn409_WhenNoCopiesAvailable() {
-            // TODO:
-            // 1. Create a book with totalCopies = 1
-            // 2. Create 2 members
-            // 3. First member borrows the book successfully
-            // 4. Second member tries to borrow — should return 409
-            fail("Not implemented yet");
+            // Arrange
+            // 1. Create a book with totalCopies = 1 (Helper method saves it with 3 by default, let's update it)
+            Book book = createTestBook("978-201", "Last Copy", "Author");
+            book.setAvailableCopies(0); // Manually set to 0 for test
+            bookRepository.save(book);
+
+            // 2. Create a member
+            Member member = createTestMember("User", "user@test.com", MembershipType.STANDARD);
+
+            // Act
+            // 3. Try to borrow — should return 409
+            BorrowRequest request = new BorrowRequest(book.getId(), member.getId());
+            ResponseEntity<Map> response = restTemplate.postForEntity(baseUrl + "/borrows", request, Map.class);
+
+            // Assert
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+            assertThat(response.getBody().get("message").toString())
+                    .containsIgnoringCase("No available copies of");
         }
 
         @Test
         @DisplayName("should return 404 when member does not exist")
         void shouldReturn404_WhenMemberNotFound() {
-            // TODO: Try to borrow with a non-existent memberId
-            fail("Not implemented yet");
+            // Arrange
+            Book book = createTestBook("978-301", "Some Book", "Author");
+
+            // Act
+            // Try to borrow with a non-existent memberId (e.g., 9999)
+            BorrowRequest request = new BorrowRequest(book.getId(), 9999L);
+            ResponseEntity<Map> response = restTemplate.postForEntity(baseUrl + "/borrows", request, Map.class);
+
+            // Assert
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         }
 
         @Test
         @DisplayName("should return 404 when book does not exist")
         void shouldReturn404_WhenBookNotFound() {
-            // TODO: Try to borrow a non-existent bookId
-            fail("Not implemented yet");
+            // Arrange
+            Member member = createTestMember("User", "user@test.com", MembershipType.STANDARD);
+
+            // Act
+            // Try to borrow a non-existent bookId (e.g., 9999)
+            BorrowRequest request = new BorrowRequest(9999L, member.getId());
+            ResponseEntity<Map> response = restTemplate.postForEntity(baseUrl + "/borrows", request, Map.class);
+
+            // Assert
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         }
     }
 
