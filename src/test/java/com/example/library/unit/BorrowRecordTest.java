@@ -38,7 +38,7 @@ class BorrowRecordTest {
         @DisplayName("should return 0 when book is returned on time")
         void shouldReturnZeroFine_WhenReturnedOnTime() {
             BorrowRecord record = new BorrowRecord(createSampleBook(), createSampleMember());
-            record.setReturnDate(record.getDueDate()); // returned exactly on due date
+            record.setReturnDate(record.getDueDate());
 
             assertEquals(0.0, record.calculateFine());
         }
@@ -47,7 +47,7 @@ class BorrowRecordTest {
         @DisplayName("should return 0 when book is returned before due date")
         void shouldReturnZeroFine_WhenReturnedEarly() {
             BorrowRecord record = new BorrowRecord(createSampleBook(), createSampleMember());
-            record.setReturnDate(record.getBorrowDate().plusDays(5)); // returned after 5 days
+            record.setReturnDate(record.getBorrowDate().plusDays(5));
 
             assertEquals(0.0, record.calculateFine());
         }
@@ -56,7 +56,7 @@ class BorrowRecordTest {
         @DisplayName("should calculate correct fine when returned 3 days late")
         void shouldCalculateCorrectFine_WhenReturnedLate() {
             BorrowRecord record = new BorrowRecord(createSampleBook(), createSampleMember());
-            record.setReturnDate(record.getDueDate().plusDays(3)); // 3 days late
+            record.setReturnDate(record.getDueDate().plusDays(3));
 
             double expectedFine = 3 * BorrowRecord.DAILY_FINE_RATE; // 3 * 1.50 = 4.50
             assertEquals(expectedFine, record.calculateFine());
@@ -73,7 +73,7 @@ class BorrowRecordTest {
     }
 
     // =========================================================================
-    // TODO: Students should write these tests
+    // isOverdue() tests
     // =========================================================================
 
     @Nested
@@ -83,32 +83,55 @@ class BorrowRecordTest {
         @Test
         @DisplayName("should return true when checked after due date and still borrowed")
         void shouldBeOverdue_WhenPastDueDateAndStillBorrowed() {
-            // TODO: Create a BorrowRecord and check isOverdue() with a date after dueDate
-            fail("Not implemented yet");
+            // Arrange
+            BorrowRecord record = new BorrowRecord(createSampleBook(), createSampleMember());
+            // Status defaults to BORROWED; check one day after the due date
+            LocalDate oneDayLate = record.getDueDate().plusDays(1);
+
+            // Act & Assert
+            assertTrue(record.isOverdue(oneDayLate));
         }
 
         @Test
         @DisplayName("should return false when checked before due date")
         void shouldNotBeOverdue_WhenBeforeDueDate() {
-            // TODO: Create a BorrowRecord and check isOverdue() with a date before dueDate
-            fail("Not implemented yet");
+            // Arrange
+            BorrowRecord record = new BorrowRecord(createSampleBook(), createSampleMember());
+            LocalDate beforeDue = record.getDueDate().minusDays(1);
+
+            // Act & Assert
+            assertFalse(record.isOverdue(beforeDue));
         }
 
         @Test
         @DisplayName("should return false when book is already returned (even if past due)")
         void shouldNotBeOverdue_WhenAlreadyReturned() {
-            // TODO: Create a BorrowRecord, set status to RETURNED,
-            //       then check isOverdue() — should be false even if past due
-            fail("Not implemented yet");
+            // Arrange
+            BorrowRecord record = new BorrowRecord(createSampleBook(), createSampleMember());
+            record.setStatus(BorrowStatus.RETURNED);
+            LocalDate wellPastDue = record.getDueDate().plusDays(10);
+
+            // Act & Assert
+            // isOverdue() requires status == BORROWED, so a returned book is never overdue
+            assertFalse(record.isOverdue(wellPastDue));
         }
 
         @Test
         @DisplayName("should return false on exactly the due date")
         void shouldNotBeOverdue_OnExactDueDate() {
-            // TODO: Check isOverdue() when asOfDate == dueDate
-            fail("Not implemented yet");
+            // Arrange
+            BorrowRecord record = new BorrowRecord(createSampleBook(), createSampleMember());
+            // isOverdue uses isAfter(dueDate), so the due date itself is NOT overdue
+            LocalDate exactDueDate = record.getDueDate();
+
+            // Act & Assert
+            assertFalse(record.isOverdue(exactDueDate));
         }
     }
+
+    // =========================================================================
+    // Constructor / default values tests
+    // =========================================================================
 
     @Nested
     @DisplayName("Constructor / default values")
@@ -117,22 +140,32 @@ class BorrowRecordTest {
         @Test
         @DisplayName("should set borrow date to today")
         void shouldSetBorrowDateToToday() {
-            // TODO: Verify that new BorrowRecord sets borrowDate to LocalDate.now()
-            fail("Not implemented yet");
+            // Arrange & Act
+            BorrowRecord record = new BorrowRecord(createSampleBook(), createSampleMember());
+
+            // Assert
+            assertEquals(LocalDate.now(), record.getBorrowDate());
         }
 
         @Test
         @DisplayName("should set due date to 14 days from today")
         void shouldSetDueDateTo14DaysFromToday() {
-            // TODO: Verify dueDate = borrowDate + STANDARD_BORROW_DAYS
-            fail("Not implemented yet");
+            // Arrange & Act
+            BorrowRecord record = new BorrowRecord(createSampleBook(), createSampleMember());
+
+            // Assert: dueDate must be exactly STANDARD_BORROW_DAYS after borrowDate
+            LocalDate expectedDueDate = LocalDate.now().plusDays(BorrowRecord.STANDARD_BORROW_DAYS);
+            assertEquals(expectedDueDate, record.getDueDate());
         }
 
         @Test
         @DisplayName("should set status to BORROWED")
         void shouldSetStatusToBorrowed() {
-            // TODO: Verify default status is BORROWED
-            fail("Not implemented yet");
+            // Arrange & Act
+            BorrowRecord record = new BorrowRecord(createSampleBook(), createSampleMember());
+
+            // Assert
+            assertEquals(BorrowStatus.BORROWED, record.getStatus());
         }
     }
 }
