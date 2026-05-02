@@ -156,7 +156,6 @@ class BorrowServiceTest {
         void shouldThrow_WhenMemberInactive() {
             sampleMember.setActive(false);
             when(memberRepository.findById(1L)).thenReturn(Optional.of(sampleMember));
-            when(bookRepository.findById(1L)).thenReturn(Optional.of(sampleBook));
 
             IllegalStateException e = assertThrows(IllegalStateException.class, () -> borrowService.borrowBook(1L, 1L));
             assertTrue(e.getMessage().contains("Inactive members cannot borrow books"));
